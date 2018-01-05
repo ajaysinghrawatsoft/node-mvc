@@ -83,6 +83,13 @@ app.get('/', homeController.index);
 app.get('/signup', userController.getSignup);
 app.get('/signin', userController.getSignin);
 app.post('/signup', userController.postSignup);
+app.post('/signin', userController.postLogin);
+
+/**
+ * API keys and Passport configuration.
+ */
+const passportConfig = require('./config/passport');
+
  /**
  * Error Handler.
  */

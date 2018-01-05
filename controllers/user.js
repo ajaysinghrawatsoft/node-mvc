@@ -1,4 +1,6 @@
+const passport = require('passport');
 const User = require('../models/User');
+
 /**
 * GET /signup
 * Signup Page
@@ -56,3 +58,34 @@ exports.postSignup = (req, res, next) => {
 	    });
 	});
 }
+
+/**
+ * POST /login
+ * Sign in using email and password.
+ */
+exports.postLogin = (req, res, next) => {
+  req.assert('email', 'Email is not valid').isEmail();
+  req.assert('password', 'Password cannot be blank').notEmpty();
+  req.sanitize('email').normalizeEmail({ gmail_remove_dots: false });
+
+  const errors = req.validationErrors();
+
+  if (errors) {
+    req.flash('errors', errors);
+    return res.redirect('/signin');
+  }
+
+  passport.authenticate('local', (err, user, info) => {
+    if (err) { return next(err); }
+    if (!user) {
+      req.flash('errors', info);
+      return res.redirect('/signin');
+    }
+    req.logIn(user, (err) => {
+    	console.log(user);
+      if (err) { return next(err); }
+      req.flash('success', { msg: 'Success! You are logged in.' });
+      res.redirect(req.session.returnTo || '/');
+    });
+  })(req, res, next);
+ };
