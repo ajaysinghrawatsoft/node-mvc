@@ -59,7 +59,7 @@ app.use(sass({
 }));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true}));
+app.use(bodyParser.urlencoded({ extended: false}));
 app.use(expressValidator());
 app.use(session({
 	resave: true,
@@ -85,6 +85,11 @@ app.get('/signin', userController.getSignin);
 app.post('/signup', userController.postSignup);
 app.post('/signin', userController.postLogin);
 
+/**
+* Api route
+*/
+app.post(process.env.API_PREFIX+'signup', userController.postApiSignup);
+app.post(process.env.API_PREFIX+'signin', userController.postApiSignin);
 /**
  * API keys and Passport configuration.
  */
