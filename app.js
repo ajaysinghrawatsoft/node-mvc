@@ -17,16 +17,12 @@ const passport = require('passport');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 /*
 * Load environment variable from the file 
 */
 dotenv.load({load : '.env'});
-/*
-* Controllers (route handlers)
-*/
-const homeController = require('./controllers/home');
-const userController = require('./controllers/user');
 
 /*
 * Create express server
@@ -76,20 +72,42 @@ app.use(passport.session());
 app.use(flash());
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
 
+
+
 /**
  * Primary app routes.
  */
-app.get('/', homeController.index);
+/*app.get('/', homeController.index);
 app.get('/signup', userController.getSignup);
 app.get('/signin', userController.getSignin);
 app.post('/signup', userController.postSignup);
-app.post('/signin', userController.postLogin);
+app.post('/signin', userController.postLogin);*/
 
+//var routes = require('./routes/userRoutes');
+//var routes = require('./routes/homeRoutes');;
 /**
-* Api route
+* Middleware to verify authorised request
 */
-app.post(process.env.API_PREFIX+'signup', userController.postApiSignup);
-app.post(process.env.API_PREFIX+'signin', userController.postApiSignin);
+app.use((req, res, next) => {
+  if(req.headers && req.headers.authorization) {
+    jwt.verify(req.headers.authorization, process.env.JWT_SECRET, (err, decode) => {
+      if(err) {req.user = undefined; console.log(err);}
+      req.user = decode;
+      console.log(req.user);
+      next();
+    });
+  } else {
+    req.user = undefined;
+    next();
+  }
+});
+
+app.use(require('./routes'));
+
+/*app.get('/tasks', userController.loginRequired,(req, res) => {
+  console.log("yes authorized");
+});*/
+
 /**
  * API keys and Passport configuration.
  */

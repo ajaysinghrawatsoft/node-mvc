@@ -1,3 +1,5 @@
+'use strict'
+
 const passport = require('passport');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
@@ -20,6 +22,17 @@ exports.getSignin = (req, res) => {
 	return res.render('account/signin', {
 		title: 'SignIn'
 	});
+}
+
+/**
+* loginRequired
+*/
+exports.loginRequired = (req, res, next) => {
+	if(req.user) {
+		next();
+	} else {
+		return res.status(401).json({message: 'Unauthorized user'});
+	}
 }
 
 /**
@@ -116,12 +129,13 @@ exports.postApiSignup = (req, res) => {
 			res.json({'status': false, 'message': 'Account with that email address already exists.'});
 		}
 		user.save((err) => {
-	      if (err) { return next(err); }
+	      if (err) { console.log(err);res.json({'status': false, 'message': 'Something gone wrong.'}); }
 	      req.logIn(user, (err) => {
 	        if (err) {
 				res.json({'status': false, 'message': 'User not registered'});
 	        }
-	        res.json({'status': true, 'message': 'User registered successfully'});
+	        const token = jwt.sign({email: user.email, createdAt : user.createdAt}, process.env.JWT_SECRET);
+			res.status(200).json({'status': true, 'message': 'Token Key', token: token});
 	      });
 	    });
 	});
@@ -152,10 +166,8 @@ exports.postApiSignin = (req, res, next) => {
 	    user.comparePassword(req.body.password, (err, isMatch) => {
 	      	if (err) { console.log(err); res.status(401).json({'status': false, 'message': 'Invalid email or password.'});}
 		    if (isMatch) {
-		      	console.log("Yes matched");
-		      	const payload = {email: user.email};
-				const token = jwt.sign(user.email, process.env.JWT_SECRET);
-				res.status(200).json({'status': true, 'message': 'user data', data: user, token: token});
+				const token = jwt.sign({email: user.email, createdAt : user.createdAt}, process.env.JWT_SECRET);
+				res.status(200).json({'status': true, 'message': 'Token Key', token: token});
 			} else {
 		      	res.status(401).json({'status': false, 'message': 'Invalid email or password.'});
 		    }
